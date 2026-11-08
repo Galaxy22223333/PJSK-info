@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <!--
+    Advantage 版说明（基于当前 index.html，未改动 index.html）
+    本次增量：
+      1. 组合成员页顶部新增「组合介绍」（5 个组合 × 3 语言），底部新增组合应援按钮；
+         组合应援与角色应援分开计数（pjsk-cheer-v2-unit-*）。
+      2. 快捷体验改为按类别展示：角色 / 组合 / 爱好 / 食物 / 生日，点击即按该词检索，
+         用来体现「不只可以搜名字」。
+      3. 搜索索引移除身高、星座、年龄；生日、爱好、食物、学校、组合、简介等仍可检索。
+      4. 应援计数换用新键（pjsk-cheer-v2-*），页面上此前累计的应援数临时归零。
+    以下为更早的 Rework / LanguageSupport 记录：
+    ------------------------------------------------------------
     Rework 版说明（基于 index.html，未改动原文件）
     主要改动：
       1. 事实修正：日野森志步班级 2-A → 2-B；星乃一歌代表色 #3366CC → #33AAEE；
@@ -289,6 +299,22 @@
         .hint-tag:focus-visible {
             background: rgba(255, 255, 255, 0.25);
             color: #fff;
+        }
+
+        .hint-tags {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            vertical-align: middle;
+        }
+
+        .hint-kind {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            opacity: 0.6;
+            margin-right: 5px;
         }
 
         /* 搜索结果面板 */
@@ -725,6 +751,54 @@
             font-size: 13px;
             color: var(--text-sub);
             margin-top: 4px;
+        }
+
+        /* 组合介绍（成员页顶部） */
+        .unit-intro {
+            margin: 0 0 22px;
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 3px solid #ffdd40;
+        }
+
+        .unit-intro-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            color: #ffdd81;
+            margin-bottom: 6px;
+        }
+
+        .unit-intro-text {
+            font-size: 14px;
+            line-height: 1.85;
+            color: #d1d7ee;
+        }
+
+        /* 组合应援（成员页底部） */
+        .unit-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 26px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .unit-cheer {
+            background: linear-gradient(135deg, #ff8ab3, #e0387b);
+            min-width: 220px;
+        }
+
+        #unitCheerStatus {
+            width: 100%;
+            text-align: center;
+            color: #e2e8ff;
+            font-size: 14px;
+            min-height: 22px;
         }
 
         .characters-grid {
@@ -1352,11 +1426,7 @@
 
             <div class="hint-message">
                 <span id="hintLabel">快捷体验：</span>
-                <button type="button" class="hint-tag" data-kw="星乃一歌">星乃一歌</button>
-                <button type="button" class="hint-tag" data-kw="宵崎奏">宵崎奏</button>
-                <button type="button" class="hint-tag" data-kw="天马司">天马司</button>
-                <button type="button" class="hint-tag" data-kw="小豆泽心羽">小豆泽心羽</button>
-                <button type="button" class="hint-tag" data-kw="花里实乃理">花里实乃理</button>
+                <span id="hintTags" class="hint-tags"></span>
             </div>
 
             <div id="searchSuggestions" class="search-suggestions" aria-live="polite">
@@ -1600,7 +1670,20 @@
                 </h2>
                 <p class="unit-subtitle-hint" id="unitSubtitleHint">成员介绍 · 点击成员卡片查看详细档案</p>
             </div>
+
+            <div class="unit-intro">
+                <div class="unit-intro-title" id="unitIntroTitle">组合介绍</div>
+                <p class="unit-intro-text" id="unitIntroText"></p>
+            </div>
+
             <div id="characterContainer" class="characters-grid"></div>
+
+            <div class="unit-actions">
+                <button id="unitCheerButton" class="action-button unit-cheer" type="button">
+                    <span aria-hidden="true">💖</span> <span id="unitCheerLabel">为组合送应援</span>
+                </button>
+                <p id="unitCheerStatus" aria-live="polite"></p>
+            </div>
         </div>
 
         <footer class="footer">
@@ -2353,6 +2436,59 @@
             }
         };
 
+        /* 组合介绍（成员页顶部展示，按语言） */
+        const UNIT_INTRO = {
+            zh: {
+                leoneed: "由从小一起长大的四人组成的乐队。中学时代的一件往事曾让她们彼此疏远，直到在「世界」里遇见初音未来，四人才重新面对彼此。如今她们已实现职业出道，仍在为更大的舞台继续演奏。",
+                mmj: "以成为能给人们带来希望的国民偶像为目标的四人组合。引退、落选、解散——每个人都经历过挫折，也因此比谁都更认真地思考「偶像」意味着什么。",
+                vbs: "在涩谷街头活动的音乐组合。以超越传说活动「RAD WEEKEND」为共同目标，Vivids 与 BAD DOGS 两组搭档在 WEEKEND GARAGE 等地不断磨练，并一次次站上舞台。",
+                wxs: "以凤凰仙境为据点、目标是世界第一明星的演出团体。座长天马司、演员凤笑梦、草薙宁宁与演出家神代类，把各自的梦想叠在同一座舞台上。",
+                nightcord: "在网络上活动的匿名音乐社团。作曲、作词、插画、MV 各由一人负责，彼此不知道对方的真实身份，只在深夜的聊天群里以「25时」的名义写歌。"
+            },
+            ja: {
+                leoneed: "幼馴染みの4人で組んだバンド。中学時代のある出来事をきっかけに距離ができていたが、「セカイ」で初音ミクと出会い、もう一度向き合うことに。念願のプロデビューを果たし、さらに大きなステージを目指して演奏を続けている。",
+                mmj: "人々に希望を届ける国民的アイドルを目指す4人組。引退、不合格、解散——それぞれが挫折を経験しているからこそ、「アイドル」の意味を誰よりも真剣に考えている。",
+                vbs: "シブヤのストリートで活動する音楽ユニット。伝説のイベント『RAD WEEKEND』を超えることを目標に、VividsとBAD DOGSの2組がWEEKEND GARAGEなどで腕を磨き、何度もステージに立ってきた。",
+                wxs: "フェニックスワンダーランドを拠点に、世界一のスターを目指すショーユニット。座長の天馬司、鳳えむ、草薙寧々、神代類が、それぞれの夢を同じステージに重ねていく。",
+                nightcord: "ネット上で活動する匿名の音楽サークル。作曲、作詞、イラスト、MVをそれぞれが担い、互いの素顔を知らないまま、深夜のチャットで「25時」として曲を作っている。"
+            },
+            en: {
+                leoneed: "A band formed by four childhood friends. An incident in middle school had pulled them apart, but meeting Hatsune Miku in the SEKAI brought them face to face again. They have since made their professional debut and keep playing toward even bigger stages.",
+                mmj: "A four-member group aiming to become national idols who bring hope to people. Retirement, failed auditions, a disbanded unit — because each of them has known a setback, they think harder than anyone about what an idol should be.",
+                vbs: "A music unit active on the streets of Shibuya. With the shared goal of surpassing the legendary RAD WEEKEND, the duos Vivids and BAD DOGS have honed their craft at WEEKEND GARAGE and taken the stage again and again.",
+                wxs: "A show troupe based at Phoenix Wonderland, aiming for the world's greatest star. Leader Tsukasa Tenma, Emu Otori, Nene Kusanagi and director Rui Kamishiro layer their separate dreams onto one stage.",
+                nightcord: "An anonymous music circle that works online. One writes the music, one the lyrics, one the illustrations, one the videos — none of them knowing the others' real faces, making songs as “25:00” in a late-night chat."
+            }
+        };
+
+        /* 快捷体验：用不同类别的示例展示「可按爱好 / 食物 / 生日 / 组合检索」 */
+        const QUICK_TAGS = {
+            zh: [
+                { kind: "角色", query: "星乃一歌" },
+                { kind: "角色", query: "宵崎奏" },
+                { kind: "组合", query: "Leo/need" },
+                { kind: "爱好", query: "仙人掌" },
+                { kind: "食物", query: "炒面面包" },
+                { kind: "生日", query: "8月11日" }
+            ],
+            ja: [
+                { kind: "キャラ", query: "星乃一歌" },
+                { kind: "キャラ", query: "宵崎奏" },
+                { kind: "ユニット", query: "Leo/need" },
+                { kind: "趣味", query: "サボテン" },
+                { kind: "食べ物", query: "焼きそばパン" },
+                { kind: "誕生日", query: "8月11日" }
+            ],
+            en: [
+                { kind: "Character", query: "Ichika Hoshino" },
+                { kind: "Character", query: "Kanade Yoisaki" },
+                { kind: "Unit", query: "Leo/need" },
+                { kind: "Hobby", query: "cactus" },
+                { kind: "Food", query: "Yakisoba bread" },
+                { kind: "Birthday", query: "August 11" }
+            ]
+        };
+
         /* 担当（按中文原值查表，避免每个角色重复） */
         const ROLE_I18N = {
             "主唱 / 吉他":   { ja: "ボーカル／ギター", en: "Vocals / guitar" },
@@ -2458,7 +2594,12 @@
                 cheerPrompt: "点击上方粉色按钮，为 {name} 送上一份应援吧！",
                 cheerSent: "已送出第 {n} 份应援给 {name}！",
                 footerMain: "非官方粉丝图集 · 20 位角色 × 5 个组合<br>资料整理自官方角色页与游戏内档案 · 角色与立绘版权归 SEGA / Colorful Palette / Crypton Future Media 所有",
-                footerModal: "非官方粉丝图集 · 资料整理自官方角色页与游戏内档案"
+                footerModal: "非官方粉丝图集 · 资料整理自官方角色页与游戏内档案",
+                unitIntroTitle: "组合介绍",
+                unitCheer: "为组合送应援",
+                unitCheerCount: "已为 {unit} 送出 {n} 次应援！",
+                unitCheerPrompt: "点击下方按钮，为 {unit} 送上一份应援吧！",
+                unitCheerSent: "已送出第 {n} 份应援给 {unit}！"
             },
             ja: {
                 htmlLang: "ja",
@@ -2520,7 +2661,12 @@
                 cheerPrompt: "上のピンクのボタンから、{name} に応援を送りましょう！",
                 cheerSent: "{name} に {n} 回目の応援を送りました！",
                 footerMain: "非公式ファン図鑑 · 20 キャラクター × 5 ユニット<br>公式キャラクターページとゲーム内プロフィールをもとに作成 · キャラクターとイラストの著作権は SEGA / Colorful Palette / Crypton Future Media に帰属します",
-                footerModal: "非公式ファン図鑑 · 公式キャラクターページとゲーム内プロフィールをもとに作成"
+                footerModal: "非公式ファン図鑑 · 公式キャラクターページとゲーム内プロフィールをもとに作成",
+                unitIntroTitle: "ユニット紹介",
+                unitCheer: "ユニットに応援を送る",
+                unitCheerCount: "{unit} に {n} 回の応援を送りました！",
+                unitCheerPrompt: "下のボタンから、{unit} に応援を送りましょう！",
+                unitCheerSent: "{unit} に {n} 回目の応援を送りました！"
             },
             en: {
                 htmlLang: "en",
@@ -2582,7 +2728,12 @@
                 cheerPrompt: "Tap the pink button above to send a cheer to {name}!",
                 cheerSent: "Cheer #{n} sent to {name}!",
                 footerMain: "Unofficial fan gallery · 20 characters × 5 units<br>Compiled from the official character pages and in-game profiles · Characters and artwork © SEGA / Colorful Palette / Crypton Future Media",
-                footerModal: "Unofficial fan gallery · Compiled from the official character pages and in-game profiles"
+                footerModal: "Unofficial fan gallery · Compiled from the official character pages and in-game profiles",
+                unitIntroTitle: "Unit profile",
+                unitCheer: "Send cheers to this unit",
+                unitCheerCount: "You have sent {n} cheers to {unit}!",
+                unitCheerPrompt: "Tap the button below to send a cheer to {unit}!",
+                unitCheerSent: "Cheer #{n} sent to {unit}!"
             }
         };
 
@@ -2987,6 +3138,11 @@
             return entry ? entry.badge : '';
         }
 
+        function unitIntro(unitId) {
+            const table = UNIT_INTRO[currentLang] || UNIT_INTRO.zh;
+            return (table && table[unitId]) || '';
+        }
+
         function charText(key, field) {
             const translated = CHAR_I18N[currentLang] && CHAR_I18N[currentLang][key];
             if (translated && translated[field] != null) return translated[field];
@@ -3073,7 +3229,7 @@
                 char.name, char.realName, char.unit,
                 meta ? meta.name : '', meta ? meta.jp : '', meta ? meta.short : '',
                 meta ? meta.aliases.join(' ') : '',
-                char.birthday, char.zodiac, char.height, char.age,
+                char.birthday,
                 char.hairColor, char.eyeColor, char.hobbies, char.specialty,
                 char.weakness, char.favFood, char.dislikedFood, char.school,
                 char.gradeClass, char.color, char.colorName, char.role,
@@ -3092,8 +3248,6 @@
                 }
             });
 
-            const zodiac = ZODIAC_I18N[char.zodiac];
-            if (zodiac) parts.push(zodiac.ja, zodiac.en);
             const school = SCHOOL_I18N[char.school];
             if (school) parts.push(school.ja, school.en);
             const role = ROLE_I18N[char.role];
@@ -3136,6 +3290,8 @@
 
         function renderView(view) {
             setViewVisibility(view.type);
+            /* 先落定 currentView，后续渲染（如组合应援状态）需要读到当前视图 */
+            currentView = view;
 
             if (view.type === 'unit') {
                 renderCharacterList(view.unitId);
@@ -3147,8 +3303,6 @@
             if (scroller) scroller.scrollTop = view.scrollTop || 0;
 
             el('globalCloseBtn').classList.toggle('is-visible', view.type !== 'units');
-
-            currentView = view;
 
             if (view.type === 'unit') {
                 el('characterUnitTitle').focus({ preventScroll: true });
@@ -3192,6 +3346,7 @@
             if (!meta) return;
 
             el('characterUnitName').textContent = unitName(unitId);
+            el('unitIntroText').textContent = unitIntro(unitId);
 
             const logo = el('unitHeaderLogo');
             logo.src = meta.logo;
@@ -3242,6 +3397,8 @@
 
                 container.appendChild(card);
             });
+
+            updateUnitCheerStatus();
         }
 
         /* ============================================================
@@ -3332,7 +3489,7 @@
            应援（localStorage 按角色累计）
            ============================================================ */
         function cheerStorageKey() {
-            return 'pjsk-rework-cheer-' + (currentCharacterName || '');
+            return 'pjsk-cheer-v2-' + (currentCharacterName || '');
         }
 
         function getCheerCount() {
@@ -3370,6 +3527,52 @@
 
             const button = el('cheerButton');
             button.style.transform = 'scale(1.08)';
+            window.setTimeout(function () {
+                button.style.transform = '';
+            }, 180);
+        }
+
+        /* ---------- 组合应援（与角色应援分开计数） ---------- */
+        function unitCheerStorageKey(unitId) {
+            return 'pjsk-cheer-v2-unit-' + unitId;
+        }
+
+        function getUnitCheerCount(unitId) {
+            try {
+                return Number(localStorage.getItem(unitCheerStorageKey(unitId)) || 0) || 0;
+            } catch (error) {
+                return 0;
+            }
+        }
+
+        function updateUnitCheerStatus() {
+            if (!currentView || currentView.type !== 'unit') return;
+            const unitId = currentView.unitId;
+            const status = el('unitCheerStatus');
+            if (!status) return;
+            const count = getUnitCheerCount(unitId);
+            status.textContent = count > 0
+                ? t('unitCheerCount', { unit: unitName(unitId), n: count })
+                : t('unitCheerPrompt', { unit: unitName(unitId) });
+        }
+
+        function cheerForUnit() {
+            if (!currentView || currentView.type !== 'unit') return;
+            const unitId = currentView.unitId;
+            const nextCount = getUnitCheerCount(unitId) + 1;
+            try {
+                localStorage.setItem(unitCheerStorageKey(unitId), String(nextCount));
+            } catch (error) {
+                /* 隐私模式下忽略 */
+            }
+
+            el('unitCheerStatus').textContent = t('unitCheerSent', {
+                unit: unitName(unitId),
+                n: nextCount
+            });
+
+            const button = el('unitCheerButton');
+            button.style.transform = 'scale(1.06)';
             window.setTimeout(function () {
                 button.style.transform = '';
             }, 180);
@@ -3449,6 +3652,29 @@
         }
 
         /* ============================================================
+           快捷体验标签：按类别给出可直接点击的示例
+           ============================================================ */
+        function renderQuickTags() {
+            const wrap = el('hintTags');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            const tags = QUICK_TAGS[currentLang] || QUICK_TAGS.zh;
+            tags.forEach(function (tag) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'hint-tag';
+                button.innerHTML = '<span class="hint-kind">' + tag.kind + '</span>' + tag.query;
+                button.addEventListener('click', function () {
+                    const input = el('characterSearch');
+                    input.value = tag.query;
+                    runSearch();
+                    input.focus();
+                });
+                wrap.appendChild(button);
+            });
+        }
+
+        /* ============================================================
            语言切换：刷新静态文案，并重绘当前视图
            ============================================================ */
         function applyChrome() {
@@ -3478,9 +3704,7 @@
             el('hintLabel').textContent = t('hintLabel');
             el('searchEmpty').innerHTML = t('noMatchBody');
 
-            document.querySelectorAll('.hint-tag').forEach(function (tag) {
-                tag.textContent = charText(tag.getAttribute('data-kw'), 'name');
-            });
+            renderQuickTags();
 
             document.querySelectorAll('.unit-card').forEach(function (card) {
                 const unitId = card.getAttribute('data-unit');
@@ -3514,6 +3738,8 @@
 
             el('unitBackButton').textContent = t('backToUnits');
             el('unitSubtitleHint').textContent = t('unitHint');
+            el('unitIntroTitle').textContent = t('unitIntroTitle');
+            el('unitCheerLabel').textContent = t('unitCheer');
             el('detailBackButton').textContent = t('backToMembers');
 
             const sectionTitle = document.querySelector('.table-section-title');
@@ -3604,14 +3830,6 @@
                 input.focus();
             });
 
-            document.querySelectorAll('.hint-tag').forEach(function (tag) {
-                tag.addEventListener('click', function () {
-                    input.value = charText(tag.getAttribute('data-kw'), 'name');
-                    runSearch();
-                    input.focus();
-                });
-            });
-
             /* 返回 */
             el('globalCloseBtn').addEventListener('click', goBack);
             el('unitBackButton').addEventListener('click', goBack);
@@ -3633,6 +3851,7 @@
 
             /* 应援 */
             el('cheerButton').addEventListener('click', cheerForCharacter);
+            el('unitCheerButton').addEventListener('click', cheerForUnit);
 
             /* 图片兜底：加载失败时给出可辨认的占位样式 */
             function markImageBroken(node) {
